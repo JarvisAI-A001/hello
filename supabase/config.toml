@@ -1,0 +1,19 @@
+project_id = "lxahehjbyskxuytrauuv"
+
+[functions.bot-chat]
+verify_jwt = false
+
+[functions.widget-bot]
+verify_jwt = false
+
+[functions.generate-video]
+verify_jwt = false
+
+[functions.social-media-chat]
+verify_jwt = false
+
+[functions.generate-social-content]
+verify_jwt = false
+
+[functions.youtube-analytics]
+verify_jwt = false

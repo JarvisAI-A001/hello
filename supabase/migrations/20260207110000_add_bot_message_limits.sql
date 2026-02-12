@@ -1,0 +1,3 @@
+ALTER TABLE public.bots
+ADD COLUMN IF NOT EXISTS bot_plan_tier TEXT DEFAULT 'free',
+ADD COLUMN IF NOT EXISTS message_limit INTEGER DEFAULT 50;
