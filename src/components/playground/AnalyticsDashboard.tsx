@@ -118,7 +118,7 @@ export default function AnalyticsDashboard() {
     const fetchBots = async () => {
       if (!user) {
         setBots([]);
-        setSelectedBotId("");
+        setSelectedBotOptionId("");
         return;
       }
       const { data: playgrounds, error: playgroundError } = await supabase
@@ -129,7 +129,7 @@ export default function AnalyticsDashboard() {
       if (playgroundError) {
         console.error("Failed to load playgrounds", playgroundError);
         setBots([]);
-        setSelectedBotId("");
+        setSelectedBotOptionId("");
         return;
       }
 
