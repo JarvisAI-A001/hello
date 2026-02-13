@@ -4,11 +4,111 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { featureRows, pricingPlans } from "@/data/pricing";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
+import { PayPalSubscriptionButton } from "@/components/billing/PayPalSubscriptionButton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useMemo, useState } from "react";
 
 export default function Pricing() {
+  const { user, profile } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const [selectedPlanId, setSelectedPlanId] = useState<"starter" | "optimizer" | "enterprise" | null>(null);
+
+  const activatePlan = async (planId: "starter" | "optimizer" | "enterprise", subscriptionId: string) => {
+    if (!user) return;
+    const { error } = await supabase
+      .from("profiles")
+      .upsert(
+        {
+          user_id: user.id,
+          email: user.email ?? null,
+          plan: planId,
+          subscription_status: "active",
+          stripe_subscription_id: subscriptionId,
+        },
+        { onConflict: "user_id" }
+      );
+    if (error) {
+      throw error;
+    }
+    toast({
+      title: "Subscription active",
+      description: `Your ${planId} plan is now active.`,
+    });
+  };
+
+  const selectedPlan = useMemo(
+    () => pricingPlans.find((p) => p.id === selectedPlanId) ?? null,
+    [selectedPlanId]
+  );
+
+  const selectedPlanFeatures = useMemo(() => {
+    if (!selectedPlanId) return [];
+    return featureRows.map((row) => ({
+      name: row.name,
+      value: row.values[selectedPlanId],
+    }));
+  }, [selectedPlanId]);
+
   return (
     <Layout>
       <div className="min-h-screen bg-background">
+        <Dialog open={Boolean(selectedPlanId)} onOpenChange={(open) => !open && setSelectedPlanId(null)}>
+          <DialogContent className="max-w-2xl">
+            {selectedPlan && selectedPlanId && (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center justify-between">
+                    <span>{selectedPlan.name}</span>
+                    <Badge variant="outline" className="text-accent border-accent">
+                      {selectedPlan.price}
+                      {selectedPlan.period}
+                    </Badge>
+                  </DialogTitle>
+                  <DialogDescription>{selectedPlan.description}</DialogDescription>
+                </DialogHeader>
+
+                <div className="rounded-xl border border-border/60 bg-secondary/30 p-4 space-y-3">
+                  <p className="text-sm font-medium text-foreground">What you get</p>
+                  <div className="space-y-2">
+                    {selectedPlanFeatures.map((item) => (
+                      <div key={item.name} className="flex items-start justify-between gap-4 text-sm">
+                        <span className="text-muted-foreground">{item.name}</span>
+                        <span className="text-foreground font-medium text-right">{item.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {!user ? (
+                  <Button variant="accent" onClick={() => navigate("/auth")}>
+                    Log in to Subscribe
+                  </Button>
+                ) : (
+                  <PayPalSubscriptionButton
+                    plan={selectedPlanId}
+                    disabled={profile?.plan === selectedPlanId}
+                    onApprove={async (subscriptionId) => {
+                      await activatePlan(selectedPlanId, subscriptionId);
+                      setSelectedPlanId(null);
+                    }}
+                  />
+                )}
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
+
         {/* Header */}
         <section className="py-16 md:py-24 bg-secondary/30">
           <div className="container mx-auto px-4 text-center">
@@ -65,6 +165,19 @@ export default function Pricing() {
                     variant={plan.highlight ? "accent" : "outline"}
                     className="w-full mb-6"
                     size="lg"
+                    onClick={() => {
+                      if (!user) {
+                        navigate("/auth");
+                        return;
+                      }
+                      if (plan.id === "free") {
+                        toast({ title: "Free plan", description: "You can start immediately on Free." });
+                        return;
+                      }
+                      if (plan.id === "starter" || plan.id === "optimizer" || plan.id === "enterprise") {
+                        setSelectedPlanId(plan.id);
+                      }
+                    }}
                   >
                     {plan.cta}
                     <ArrowRight className="w-4 h-4" />

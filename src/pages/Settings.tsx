@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "next-themes";
+import { PayPalSubscriptionButton } from "@/components/billing/PayPalSubscriptionButton";
 
 export default function Settings() {
   const { user, profile, refreshProfile } = useAuth();
@@ -168,6 +169,19 @@ export default function Settings() {
     if (!user) return;
     setIsSaving(true);
     try {
+      // Ensure profile row exists for this user before attempting updates.
+      const { error: ensureError } = await supabase
+        .from("profiles")
+        .upsert(
+          {
+            user_id: user.id,
+            email: user.email ?? null,
+          },
+          { onConflict: "user_id" }
+        );
+
+      if (ensureError) throw ensureError;
+
       const { error } = await supabase
         .from("profiles")
         .update({
@@ -177,7 +191,6 @@ export default function Settings() {
           industry,
           logo_url: logoUrl,
           two_factor_enabled: twoFactorEnabled,
-          plan: selectedPlan,
         })
         .eq("user_id", user.id);
 
@@ -185,7 +198,11 @@ export default function Settings() {
       await refreshProfile();
       toast({ title: "Settings saved" });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
+      const pgError = error as { message?: string; code?: string; details?: string };
+      const message =
+        pgError?.code === "42703"
+          ? "Your Supabase profile table is missing newer columns. Run your latest migrations first."
+          : pgError?.message || "Unknown error";
       toast({
         title: "Save failed",
         description: message,
@@ -193,6 +210,37 @@ export default function Settings() {
       });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const activatePlan = async (planId: "starter" | "optimizer" | "enterprise", subscriptionId: string) => {
+    if (!user) return;
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .upsert(
+          {
+            user_id: user.id,
+            email: user.email ?? null,
+            plan: planId,
+            subscription_status: "active",
+            stripe_subscription_id: subscriptionId,
+          },
+          { onConflict: "user_id" }
+        );
+
+      if (error) throw error;
+      await refreshProfile();
+      toast({
+        title: "Subscription active",
+        description: `Your ${planId} plan is now active.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Subscription update failed",
+        description: error instanceof Error ? error.message : "Could not update plan",
+        variant: "destructive",
+      });
     }
   };
 
@@ -342,7 +390,7 @@ export default function Settings() {
                   <p className="text-sm text-muted-foreground">Current Plan</p>
                   <div className="flex items-center gap-2 mt-2">
                     <Badge variant="outline" className="capitalize">
-                      {selectedPlan.replace("-", " ")}
+                      {(profile?.plan || "free").replace("-", " ")}
                     </Badge>
                     <span className="text-xs text-muted-foreground">Starts on Free for everyone</span>
                   </div>
@@ -353,7 +401,7 @@ export default function Settings() {
                 {showBilling && (
                   <div className="space-y-3 animate-fade-in">
                     {plans.map((plan) => {
-                      const active = selectedPlan === plan.id;
+                      const active = (profile?.plan || "free") === plan.id;
                       return (
                         <div
                           key={plan.id}
@@ -381,12 +429,43 @@ export default function Settings() {
                               className="mt-3"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                void handleSaveChanges();
+                                toast({
+                                  title: "Current plan",
+                                  description: "This is already your active plan.",
+                                });
                               }}
-                              disabled={isSaving}
                             >
-                              {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Pay & Activate"}
+                              Active Plan
                             </Button>
+                          )}
+                          {!active && (
+                            <>
+                              {plan.id === "free" ? (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="mt-3"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedPlan("free");
+                                  }}
+                                >
+                                  Switch to Free
+                                </Button>
+                              ) : (
+                                <div className="mt-3" onClick={(e) => e.stopPropagation()}>
+                                  <PayPalSubscriptionButton
+                                    plan={plan.id as "starter" | "optimizer" | "enterprise"}
+                                    onApprove={async (subscriptionId) => {
+                                      await activatePlan(
+                                        plan.id as "starter" | "optimizer" | "enterprise",
+                                        subscriptionId
+                                      );
+                                    }}
+                                  />
+                                </div>
+                              )}
+                            </>
                           )}
                         </div>
                       );

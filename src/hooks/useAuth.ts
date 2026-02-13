@@ -16,6 +16,9 @@ interface Profile {
   logo_url?: string | null;
   two_factor_enabled?: boolean | null;
   onboarding_complete?: boolean | null;
+  subscription_status?: string | null;
+  stripe_customer_id?: string | null;
+  stripe_subscription_id?: string | null;
 }
 
 export function useAuth() {
@@ -120,10 +123,12 @@ export function useAuth() {
   const getPlaygroundLimit = () => {
     if (!profile) return 3; // Default free limit
     switch (profile.plan) {
-      case "pro":
+      case "starter":
         return 6;
-      case "exclusive":
+      case "optimizer":
         return 10;
+      case "enterprise":
+        return 20;
       default:
         return 3;
     }

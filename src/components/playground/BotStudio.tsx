@@ -110,28 +110,28 @@ export function BotStudio({
   const previewBackground = useMemo(() => {
     switch (botConfig.backgroundStyle) {
       case "gradient":
-        return "bg-gradient-to-br from-white via-slate-50 to-white text-slate-900";
+        return "bg-gradient-to-br from-background via-secondary/40 to-background text-foreground";
       case "grid":
-        return "bg-[radial-gradient(circle_at_1px_1px,rgba(148,163,184,0.2)_1px,transparent_1px)] [background-size:22px_22px] bg-white text-slate-900";
+        return "bg-[radial-gradient(circle_at_1px_1px,rgba(148,163,184,0.2)_1px,transparent_1px)] [background-size:22px_22px] bg-background text-foreground";
       case "glass":
-        return "bg-white/90 backdrop-blur-2xl text-slate-900";
+        return "bg-card/85 backdrop-blur-2xl text-foreground";
       case "clean":
       default:
-        return "bg-white text-slate-900";
+        return "bg-background text-foreground";
     }
   }, [botConfig.backgroundStyle]);
 
   const previewShellClass = useMemo(() => {
     switch (botConfig.widgetStyle) {
       case "minimal":
-        return "bg-white text-slate-900 border border-slate-200";
+        return "bg-card text-foreground border border-border";
       case "gpt":
-        return "bg-white text-slate-900 border border-slate-200";
+        return "bg-card text-foreground border border-border";
       case "modern":
-        return "bg-white text-slate-900 border border-slate-200 shadow-[0_24px_80px_rgba(15,23,42,0.12)]";
+        return "bg-card text-foreground border border-border shadow-[0_24px_80px_rgba(15,23,42,0.18)]";
       case "classic":
       default:
-        return "bg-white text-slate-900 border border-slate-200";
+        return "bg-card text-foreground border border-border";
     }
   }, [botConfig.widgetStyle]);
 
@@ -140,18 +140,18 @@ export function BotStudio({
       "px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm",
       role === "user"
         ? "text-white ml-auto"
-        : "text-slate-900 bg-white/90"
+        : "text-foreground bg-card"
     );
 
   const avatarClass = useMemo(() => {
     switch (botConfig.iconStyle) {
       case "basic":
-        return "rounded-full bg-slate-100 text-slate-900";
+        return "rounded-full bg-secondary text-foreground";
       case "outline":
-        return "rounded-full border border-slate-300 text-slate-900 bg-white";
+        return "rounded-full border border-border text-foreground bg-card";
       case "modern":
       default:
-        return "rounded-2xl bg-slate-100 text-slate-900 shadow-[0_0_20px_rgba(15,23,42,0.12)]";
+        return "rounded-2xl bg-secondary text-foreground shadow-[0_0_20px_rgba(15,23,42,0.2)]";
     }
   }, [botConfig.iconStyle]);
 
@@ -281,10 +281,10 @@ export function BotStudio({
   };
 
   return (
-    <div className="flex-1 h-[calc(100vh-4rem)] overflow-hidden bg-white text-slate-900 flex flex-col">
+    <div className="flex-1 h-[calc(100vh-4rem)] overflow-hidden bg-background text-foreground flex flex-col">
       <div className="px-6 pt-6 shrink-0">
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-          <div className="text-sm font-semibold text-slate-700">Bot Studio</div>
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card px-5 py-4 shadow-sm">
+          <div className="text-sm font-semibold text-foreground">Bot Studio</div>
           <div className="flex items-center gap-3">
             <div className="min-w-[220px]">
               <Select value={currentPlaygroundId || ""} onValueChange={onSelectPlayground}>
@@ -331,7 +331,7 @@ export function BotStudio({
             className="space-y-5 lg:shrink-0 min-h-0 overflow-y-auto pr-1"
             style={{ width: leftWidth }}
           >
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm font-semibold text-foreground mb-3">
                 <Bot className="w-4 h-4 text-accent" /> Identity
               </div>
@@ -364,7 +364,7 @@ export function BotStudio({
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm font-semibold text-foreground mb-3">
                 <Palette className="w-4 h-4 text-accent" /> Style
               </div>
@@ -411,7 +411,7 @@ export function BotStudio({
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm font-semibold text-foreground mb-3">
                 <Wand2 className="w-4 h-4 text-accent" /> Suggestions (max 3)
               </div>
@@ -436,9 +436,9 @@ export function BotStudio({
           </div>
 
           {/* Center preview */}
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg flex items-center justify-center min-h-0 h-full lg:flex-1 lg:min-w-0 overflow-hidden">
+          <div className="rounded-3xl border border-border bg-card p-6 shadow-lg flex items-center justify-center min-h-0 h-full lg:flex-1 lg:min-w-0 overflow-hidden">
             <div className={cn("w-full max-w-md rounded-3xl p-5 shadow-2xl", previewBackground, previewShellClass)}>
-              <div className="flex items-center justify-between pb-4 border-b border-slate-200">
+              <div className="flex items-center justify-between pb-4 border-b border-border">
                 <div className="flex items-center gap-3">
                   {botConfig.avatarUrl ? (
                     <img
@@ -452,11 +452,11 @@ export function BotStudio({
                     </div>
                   )}
                   <div>
-                    <p className="text-sm uppercase tracking-[0.2em] text-slate-500">ModelStack Bot</p>
+                    <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">ModelStack Bot</p>
                     <h3 className="text-xl font-semibold">{botConfig.name || "AI Assistant"}</h3>
                   </div>
                 </div>
-                <div className="px-3 py-1 rounded-full bg-slate-100 text-xs text-slate-700">
+                <div className="px-3 py-1 rounded-full bg-secondary text-xs text-muted-foreground">
                   {botConfig.aiModelProvider?.toUpperCase() || "GEMINI"}
                 </div>
               </div>
@@ -476,7 +476,7 @@ export function BotStudio({
                   {suggestions.filter((q) => q.trim()).slice(0, 3).map((q) => (
                     <span
                       key={q}
-                      className="px-3 py-1 rounded-full bg-slate-100 text-xs text-slate-700 border border-slate-200"
+                      className="px-3 py-1 rounded-full bg-secondary text-xs text-muted-foreground border border-border"
                     >
                       {q}
                     </span>
@@ -484,10 +484,10 @@ export function BotStudio({
                 </div>
               )}
 
-              <div className="mt-5 flex items-center gap-2 rounded-2xl bg-slate-100 px-3 py-2">
-                <ImageIcon className="w-4 h-4 text-slate-500" />
+              <div className="mt-5 flex items-center gap-2 rounded-2xl bg-secondary px-3 py-2">
+                <ImageIcon className="w-4 h-4 text-muted-foreground" />
                 <input
-                  className="flex-1 bg-transparent text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none"
+                  className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
                   placeholder="Type your message..."
                   readOnly
                 />
@@ -510,7 +510,7 @@ export function BotStudio({
             className="space-y-5 lg:shrink-0 min-h-0 overflow-y-auto pl-1"
             style={{ width: rightWidth }}
           >
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm font-semibold text-foreground mb-3">
                 <Settings className="w-4 h-4 text-accent" /> Configuration
               </div>
@@ -570,7 +570,7 @@ export function BotStudio({
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2 text-sm font-semibold text-foreground mb-3">
                 <ImageIcon className="w-4 h-4 text-accent" /> Behavior
               </div>

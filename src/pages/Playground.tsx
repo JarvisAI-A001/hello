@@ -1192,42 +1192,109 @@ export default function Playground() {
       const messageLimit =
         planTier === "enterprise" ? null : planTier === "optimizer" ? 200 : planTier === "starter" ? 100 : 50;
 
-      const { data, error } = await supabase
-        .from('bots')
-        .insert({
-          name: botConfig.name,
-          tone: botConfig.tone,
-          typing_speed: botConfig.typingSpeed,
-          behavior_rules: botConfig.behaviorRules,
-          business_name: botConfig.businessName,
-          industry: botConfig.industry,
-          services: botConfig.services,
-          contact_info: botConfig.contactInfo,
-          payment_methods: botConfig.paymentMethods,
-          locations: botConfig.locations,
-          faqs: botConfig.faqs,
-          policies: botConfig.policies,
-          tags: botConfig.tags,
-          greeting_message: `Hi! I'm ${botConfig.name}. How can I help you today?`,
-          primary_color: botConfig.themeColor || "#0EA5E9",
-          avatar_url: botConfig.avatarUrl || null,
-          bot_type: selectedModule?.id || 'chatbot',
-          booking_enabled: botConfig.apiIntegration ? true : false,
-          booking_button_text: "Schedule an appointment",
-          bot_plan_tier: planTier,
-          message_limit: messageLimit,
-          ai_model: botConfig.aiModelProvider || "gemini",
-          widget_style: botConfig.widgetStyle || "classic",
-          icon_style: botConfig.iconStyle || "modern",
-          background_style: botConfig.backgroundStyle || "clean",
-          suggested_questions: botConfig.suggestedQuestions || [],
-        })
-        .select('bot_id, api_key')
-        .single();
+      const basePayload = {
+        name: botConfig.name,
+        tone: botConfig.tone,
+        typing_speed: botConfig.typingSpeed,
+        behavior_rules: botConfig.behaviorRules,
+        business_name: botConfig.businessName,
+        industry: botConfig.industry,
+        services: botConfig.services,
+        contact_info: botConfig.contactInfo,
+        payment_methods: botConfig.paymentMethods,
+        locations: botConfig.locations,
+        faqs: botConfig.faqs,
+        policies: botConfig.policies,
+        tags: botConfig.tags,
+        greeting_message: `Hi! I'm ${botConfig.name}. How can I help you today?`,
+        primary_color: botConfig.themeColor || "#0EA5E9",
+        avatar_url: botConfig.avatarUrl || null,
+        bot_type: selectedModule?.id || 'chatbot',
+        booking_enabled: botConfig.apiIntegration ? true : false,
+        booking_button_text: "Schedule an appointment",
+        bot_plan_tier: planTier,
+        message_limit: messageLimit,
+      };
+
+      const extendedPayload = {
+        ...basePayload,
+        ai_model: botConfig.aiModelProvider || "gemini",
+        widget_style: botConfig.widgetStyle || "classic",
+        icon_style: botConfig.iconStyle || "modern",
+        background_style: botConfig.backgroundStyle || "clean",
+        suggested_questions: botConfig.suggestedQuestions || [],
+      };
+
+      const publishedBotIdFromPlayground =
+        (playgrounds.find((p) => p.id === currentPlaygroundId)?.bot_config as Record<string, unknown> | undefined)
+          ?.publishedBotId as string | undefined;
+
+      let data: { bot_id: string; api_key: string | null } | null = null;
+      let error: unknown = null;
+
+      if (publishedBotIdFromPlayground) {
+        const updateResult = await supabase
+          .from('bots')
+          .update(extendedPayload)
+          .eq('bot_id', publishedBotIdFromPlayground)
+          .select('bot_id, api_key')
+          .maybeSingle();
+
+        if (updateResult.error) {
+          const needsFallback =
+            (updateResult.error as { code?: string; message?: string }).code === "42703" ||
+            String((updateResult.error as { message?: string }).message || "").toLowerCase().includes("column");
+
+          if (needsFallback) {
+            const retry = await supabase
+              .from('bots')
+              .update(basePayload)
+              .eq('bot_id', publishedBotIdFromPlayground)
+              .select('bot_id, api_key')
+              .maybeSingle();
+            data = retry.data ?? null;
+            error = retry.error;
+          } else {
+            error = updateResult.error;
+          }
+        } else {
+          data = updateResult.data ?? null;
+        }
+      } else {
+        const insertResult = await supabase
+          .from('bots')
+          .insert(extendedPayload)
+          .select('bot_id, api_key')
+          .single();
+
+        if (insertResult.error) {
+          const needsFallback =
+            (insertResult.error as { code?: string; message?: string }).code === "42703" ||
+            String((insertResult.error as { message?: string }).message || "").toLowerCase().includes("column");
+
+          if (needsFallback) {
+            const retry = await supabase
+              .from('bots')
+              .insert(basePayload)
+              .select('bot_id, api_key')
+              .single();
+            data = retry.data ?? null;
+            error = retry.error;
+          } else {
+            error = insertResult.error;
+          }
+        } else {
+          data = insertResult.data;
+        }
+      }
 
       if (error) {
         console.error('Error saving bot:', error);
         throw error;
+      }
+
+      if (!data) {
+        throw new Error("Publish returned no bot data");
       }
 
       setSavedBotId(data.bot_id);
