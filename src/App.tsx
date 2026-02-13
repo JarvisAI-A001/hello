@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { GlobalNotifiers } from "@/components/notifications/GlobalNotifiers";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
@@ -24,15 +24,15 @@ import TrustedSeller from "./pages/TrustedSeller";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <OnboardingModal />
-        <GlobalNotifiers />
-        <Routes>
+const AppRoutes = () => {
+  const location = useLocation();
+  const isWidgetRoute = location.pathname.startsWith("/widget/");
+
+  return (
+    <>
+      {!isWidgetRoute && <OnboardingModal />}
+      {!isWidgetRoute && <GlobalNotifiers />}
+      <Routes>
           <Route
             path="/"
             element={
@@ -84,7 +84,18 @@ const App = () => (
           <Route path="/trusted-seller" element={<TrustedSeller />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
-        </Routes>
+      </Routes>
+    </>
+  );
+};
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <AppRoutes />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

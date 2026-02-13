@@ -241,14 +241,14 @@ export default function Widget() {
   const backgroundClass = (() => {
     switch (backgroundStyle) {
       case "gradient":
-        return "bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 text-white";
+        return "bg-gradient-to-br from-white via-slate-50 to-slate-100 text-slate-900";
       case "grid":
-        return "bg-[radial-gradient(circle_at_1px_1px,rgba(148,163,184,0.25)_1px,transparent_1px)] [background-size:22px_22px] bg-slate-950 text-white";
+        return "bg-[radial-gradient(circle_at_1px_1px,rgba(148,163,184,0.2)_1px,transparent_1px)] [background-size:22px_22px] bg-white text-slate-900";
       case "glass":
-        return "bg-white/80 backdrop-blur-2xl";
+        return "bg-white/90 backdrop-blur-2xl text-slate-900";
       case "clean":
       default:
-        return "bg-background";
+        return "bg-white text-slate-900";
     }
   })();
 
@@ -299,7 +299,7 @@ export default function Widget() {
   }
 
   return (
-    <div className={cn("h-screen flex flex-col", backgroundClass)}>
+    <div className={cn("h-screen w-full max-w-full overflow-hidden flex flex-col", backgroundClass)}>
       {/* Header - Classic preview style */}
       <div
         className={cn(
@@ -343,8 +343,8 @@ export default function Widget() {
       {/* Messages */}
       <div
         className={cn(
-          "flex-1 overflow-y-auto p-4 space-y-3",
-          styleVariant === "minimal" ? "bg-transparent" : "bg-background"
+          "flex-1 overflow-y-auto overflow-x-hidden no-scrollbar touch-pan-y p-4 space-y-3",
+          styleVariant === "minimal" ? "bg-transparent" : "bg-white"
         )}
       >
         {messages.map((message, index) => (
@@ -357,7 +357,7 @@ export default function Widget() {
           >
             <div
               className={cn(
-                "max-w-[80%] px-4 py-2 text-sm [&_strong]:font-bold [&_em]:italic",
+                "max-w-[80%] break-words px-4 py-2 text-sm [&_strong]:font-bold [&_em]:italic",
                 message.role === 'user'
                   ? "rounded-2xl rounded-br-sm text-white"
                   : "rounded-2xl rounded-bl-sm"
@@ -412,7 +412,7 @@ export default function Widget() {
       <div
         className={cn(
           "p-4 border-t border-border space-y-3",
-          styleVariant === "gpt" ? "bg-slate-900 text-white border-white/10" : "bg-background"
+          styleVariant === "gpt" ? "bg-slate-900 text-white border-white/10" : "bg-white"
         )}
       >
         {botInfo?.booking_enabled && (
