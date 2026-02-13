@@ -4,14 +4,25 @@ import type { Database } from './types';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const isSupabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY);
+
+// Use safe placeholders so the app does not crash to a white screen when env vars are missing.
+const FALLBACK_URL = "https://placeholder.supabase.co";
+const FALLBACK_KEY =
+  "placeholder-key-for-build-and-runtime-only";
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+export const supabase = createClient<Database>(
+  SUPABASE_URL || FALLBACK_URL,
+  SUPABASE_PUBLISHABLE_KEY || FALLBACK_KEY,
+  {
   auth: {
     storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
-  }
+  },
 });
+
+export { isSupabaseConfigured };

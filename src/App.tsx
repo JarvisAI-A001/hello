@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { GlobalNotifiers } from "@/components/notifications/GlobalNotifiers";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
+import { isSupabaseConfigured } from "@/integrations/supabase/client";
 import Index from "./pages/Index";
 import Projects from "./pages/Projects";
 import Playground from "./pages/Playground";
@@ -30,6 +31,11 @@ const AppRoutes = () => {
 
   return (
     <>
+      {!isSupabaseConfigured && (
+        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[100] rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-2 text-xs text-foreground">
+          Missing `VITE_SUPABASE_URL` or `VITE_SUPABASE_PUBLISHABLE_KEY` in environment variables.
+        </div>
+      )}
       {!isWidgetRoute && <OnboardingModal />}
       {!isWidgetRoute && <GlobalNotifiers />}
       <Routes>
